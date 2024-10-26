@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resultados de Análisis</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <h1>Análisis de Precios y Cantidad Vendida</h1>
+    
+    <h2>Comparación de Precios Promedio por Mes</h2>
+    <canvas id="preciosChart"></canvas>
+
+    <h2>Producto con Mayor Cantidad Vendida</h2>
+    <p>El producto con mayor cantidad vendida es: <strong>{{ producto_mas_vendido }}</strong></p>
+
+    <h2>Cantidad Recomendada para el Próximo Mes</h2>
+    <p>
+        El mes pasado compraste aproximadamente <strong>{{ cantidad_historica_promedio }}</strong> unidades de {{ producto_mas_vendido }}.
+        Para evitar desabastecimiento, recomendamos comprar al menos <strong>{{ cantidad_recomendada }}</strong> unidades de este producto para el próximo mes.
+    </p>
+
+    <script>
+        // Parsear los datos JSON en formato JavaScript
+        const preciosData = JSON.parse('{{ precios_json | safe }}');
+        const preciosAjustadosData = JSON.parse('{{ precios_ajustados_json | safe }}');
+
+        // Preparar los datos para Chart.js
+        const labels = Object.keys(preciosData);
+        
+        // Para cada producto, genera los datasets de precios originales y ajustados
+        const datasets = Object.keys(preciosData[labels[0]]).flatMap((producto) => ([
+            {
+                label: `${producto} - Precio Original`,
+                data: labels.map((mes) => preciosData[mes][producto]),
+                fill: false,
+                borderColor: 'rgba(75, 192, 192, 1)',
+                tension: 0.1
+            },
+            {
+                label: `${producto} - Precio Ajustado`,
+                data: labels.map((mes) => preciosAjustadosData[mes][producto]),
+                fill: false,
+                borderColor: 'rgba(255, 99, 132, 1)',
+                borderDash: [5, 5],
+                tension: 0.1
+            }
+        ]));
+
+        // Configurar el gráfico
+        const ctx = document.getElementById('preciosChart').getContext('2d');
+        new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: datasets
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    },
+                    tooltip: {
+                        enabled: true
+                    }
+                },
+                scales: {
+                    x: {
+                        title: {
+                            display: true,
+                            text: 'Mes'
+                        }
+                    },
+                    y: {
+                        title: {
+                            display: true,
+                            text: 'Precio Promedio (ARS)'
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
